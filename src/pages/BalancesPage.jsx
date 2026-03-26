@@ -24,12 +24,26 @@ function BalancesPage() {
     event.preventDefault();
     setStatusMessage("");
     setErrorMessage("");
+
+    const cashInHand = Number(values.cashInHand);
+    const bankBalance = Number(values.bankBalance);
+
+    if (Number.isNaN(cashInHand) || Number.isNaN(bankBalance)) {
+      setErrorMessage("Please enter valid numbers for both balances.");
+      return;
+    }
+
+    if (cashInHand < 0) {
+      setErrorMessage("Cash in hand cannot be negative.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       await saveBalances({
-        cashInHand: Number(values.cashInHand),
-        bankBalance: Number(values.bankBalance),
+        cashInHand,
+        bankBalance,
       });
 
       setValues(initialState);
@@ -65,7 +79,7 @@ function BalancesPage() {
       <SectionCard
         eyebrow="Balance form"
         title="Push updated balances"
-        description="Send the latest values to your backend and keep the cached balance cards fresh."
+        description="Send the latest values to your backend and keep the cached balance cards fresh. Cash cannot be negative, but bank balance can be negative."
       >
         <form className="grid gap-5 md:grid-cols-2" onSubmit={handleSubmit}>
           <StatusBanner tone="success" message={statusMessage} className="md:col-span-2" />
@@ -86,7 +100,6 @@ function BalancesPage() {
           <Field
             label="Bank balance"
             type="number"
-            min="0"
             step="0.01"
             value={values.bankBalance}
             onChange={(event) =>

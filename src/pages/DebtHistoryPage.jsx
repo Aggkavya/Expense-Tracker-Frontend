@@ -7,7 +7,7 @@ import {
   StatusBanner,
 } from "../components/FormControls";
 import { useFinance } from "../context/FinanceContext";
-import { paymentModes } from "../lib/api";
+import { getDebtHistory, paymentModes } from "../lib/api";
 import { formatCurrency, formatDate } from "../lib/format";
 
 function DebtHistoryPage() {
@@ -17,19 +17,22 @@ function DebtHistoryPage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [paymentForms, setPaymentForms] = useState({});
+  const [historyByDebtId, setHistoryByDebtId] = useState({});
+  const [historyLoadingByDebtId, setHistoryLoadingByDebtId] = useState({});
 
   const debtSummary = useMemo(
     () =>
       debts.reduce(
         (summary, debt) => {
+          const resolvedHistory = historyByDebtId[debt.id] ?? debt.ledgers ?? [];
           summary.total += Number(debt.amount ?? 0);
           summary.remaining += Number(debt.remainingAmount ?? 0);
-          summary.ledgerCount += debt.ledgers?.length ?? 0;
+          summary.ledgerCount += resolvedHistory.length;
           return summary;
         },
         { total: 0, remaining: 0, ledgerCount: 0 },
       ),
-    [debts],
+    [debts, historyByDebtId],
   );
 
   function getPaymentForm(debtId) {
@@ -42,6 +45,10 @@ function DebtHistoryPage() {
     );
   }
 
+  function getResolvedHistory(debt) {
+    return historyByDebtId[debt.id] ?? debt.ledgers ?? [];
+  }
+
   function updatePaymentForm(debtId, field, value) {
     setPaymentForms((current) => ({
       ...current,
@@ -50,6 +57,49 @@ function DebtHistoryPage() {
         [field]: value,
       },
     }));
+  }
+
+  async function loadHistory(debtId) {
+    if (historyByDebtId[debtId]) {
+      return;
+    }
+
+    setHistoryLoadingByDebtId((current) => ({
+      ...current,
+      [debtId]: true,
+    }));
+
+    try {
+      const response = await getDebtHistory(debtId);
+      const normalized = Array.isArray(response)
+        ? response.map((entry) => ({
+            ...entry,
+            amount: entry.amount ?? entry.amountPaid ?? 0,
+          }))
+        : [];
+
+      setHistoryByDebtId((current) => ({
+        ...current,
+        [debtId]: normalized,
+      }));
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setHistoryLoadingByDebtId((current) => ({
+        ...current,
+        [debtId]: false,
+      }));
+    }
+  }
+
+  function handleToggleDetails(debtId) {
+    if (expandedDebtId === debtId) {
+      setExpandedDebtId(null);
+      return;
+    }
+
+    setExpandedDebtId(debtId);
+    void loadHistory(debtId);
   }
 
   async function handlePayDebt(event, debtId) {
@@ -75,6 +125,15 @@ function DebtHistoryPage() {
           description: "",
         },
       }));
+
+      // Force-refresh this debt's history after a payment.
+      setHistoryByDebtId((current) => {
+        const next = { ...current };
+        delete next[debtId];
+        return next;
+      });
+      await loadHistory(debtId);
+
       setStatusMessage("Debt payment recorded successfully.");
     } catch (error) {
       setErrorMessage(error.message);
@@ -150,6 +209,8 @@ function DebtHistoryPage() {
               const paymentForm = getPaymentForm(debt.id);
               const isExpanded = expandedDebtId === debt.id;
               const isBusy = activeDebtId === debt.id;
+              const isHistoryLoading = historyLoadingByDebtId[debt.id] === true;
+              const history = getResolvedHistory(debt);
 
               return (
                 <article
@@ -188,7 +249,7 @@ function DebtHistoryPage() {
                       />
                       <MiniStat
                         label="Ledger rows"
-                        value={String(debt.ledgers?.length ?? 0)}
+                        value={String(history.length)}
                       />
                     </div>
                   </div>
@@ -196,9 +257,7 @@ function DebtHistoryPage() {
                   <div className="mt-5 flex flex-wrap gap-3">
                     <button
                       type="button"
-                      onClick={() =>
-                        setExpandedDebtId((current) => (current === debt.id ? null : debt.id))
-                      }
+                      onClick={() => handleToggleDetails(debt.id)}
                       className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100"
                     >
                       {isExpanded ? "Hide details" : "Show details"}
@@ -279,11 +338,17 @@ function DebtHistoryPage() {
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
-                                {debt.ledgers?.length ? (
-                                  debt.ledgers.map((ledger) => (
+                                {isHistoryLoading ? (
+                                  <tr>
+                                    <td className="px-4 py-8 text-center text-slate-400" colSpan="4">
+                                      Loading history...
+                                    </td>
+                                  </tr>
+                                ) : history.length ? (
+                                  history.map((ledger) => (
                                     <tr key={ledger.id}>
                                       <td className="px-4 py-3 font-semibold text-slate-900">
-                                        {formatCurrency(ledger.amount)}
+                                        {formatCurrency(ledger.amount ?? ledger.amountPaid)}
                                       </td>
                                       <td className="px-4 py-3">{ledger.paymentMode}</td>
                                       <td className="px-4 py-3">{ledger.description}</td>

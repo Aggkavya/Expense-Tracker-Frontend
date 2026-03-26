@@ -130,7 +130,7 @@ async function request(path, options = {}) {
 
   if (!response.ok) {
     const message =
-      (typeof payload === "object" && payload?.message) ||
+      (typeof payload === "object" && (payload?.message || payload?.error)) ||
       (typeof payload === "string" && payload) ||
       `Request failed with status ${response.status}.`;
 
@@ -201,6 +201,10 @@ export function createDebt(payload) {
 
 export function getAllDebts() {
   return request("/debt/allDebts");
+}
+
+export function getDebtHistory(debtId) {
+  return request(`/debt/${debtId}/history`);
 }
 
 export function payDebt(payload) {
