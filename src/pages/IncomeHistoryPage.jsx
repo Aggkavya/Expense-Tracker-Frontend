@@ -7,32 +7,31 @@ import {
   StatusBanner,
 } from "../components/FormControls";
 import { useFinance } from "../context/FinanceContext";
-import { expenseCategories } from "../lib/api";
 import { formatCurrency, formatDate } from "../lib/format";
 
 const initialFilters = {
-  category: "",
   startDate: "",
   endDate: "",
 };
 
-function ExpenseHistoryPage() {
+function IncomeHistoryPage() {
   const {
-    activeCollection,
-    applyExpenseFilters,
-    expenses,
-    isBootstrapping,
+    incomeTotals,
+    incomes,
+    isIncomeLoading,
     isRefreshing,
-    loadAllExpenses,
-    removeExpense,
+    loadAllIncomes,
+    refreshIncomeTotals,
+    removeIncome,
     requestError,
-    totals,
   } = useFinance();
   const [filters, setFilters] = useState(initialFilters);
   const [sortConfig, setSortConfig] = useState({ key: "date", direction: "desc" });
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [deletingExpenseId, setDeletingExpenseId] = useState(null);
+  const [deletingIncomeId, setDeletingIncomeId] = useState(null);
+
+  const hasFilters = filters.startDate !== "" || filters.endDate !== "";
 
   function getDeleteErrorMessage(error) {
     const raw = String(error?.message ?? "");
@@ -48,7 +47,7 @@ function ExpenseHistoryPage() {
     setErrorMessage("");
 
     try {
-      await applyExpenseFilters(filters);
+      await refreshIncomeTotals(filters);
       setStatusMessage("Filters applied.");
     } catch (error) {
       setErrorMessage(error.message);
@@ -61,17 +60,15 @@ function ExpenseHistoryPage() {
     setErrorMessage("");
 
     try {
-      await loadAllExpenses();
+      await loadAllIncomes();
     } catch (error) {
       setErrorMessage(error.message);
     }
   }
 
-  async function handleDelete(expenseId) {
-    const hasFilters =
-      filters.category !== "" || filters.startDate !== "" || filters.endDate !== "";
+  async function handleDelete(incomeId) {
     const confirmed = window.confirm(
-      "Delete this expense? This cannot be undone. Balance will be adjusted automatically.",
+      "Delete this income? This cannot be undone. Balance will be adjusted automatically.",
     );
 
     if (!confirmed) {
@@ -80,27 +77,48 @@ function ExpenseHistoryPage() {
 
     setStatusMessage("");
     setErrorMessage("");
-    setDeletingExpenseId(expenseId);
+    setDeletingIncomeId(incomeId);
 
     try {
-      await removeExpense(expenseId, {
+      await removeIncome(incomeId, {
         filters: hasFilters ? filters : null,
       });
-      window.alert("Expense deleted. Balance was updated.");
+      window.alert("Income deleted. Balance was updated.");
     } catch (error) {
       const message = getDeleteErrorMessage(error);
       setErrorMessage(message);
       window.alert(message);
     } finally {
-      setDeletingExpenseId(null);
+      setDeletingIncomeId(null);
     }
   }
 
-  const sortedExpenses = useMemo(() => {
-    const cloned = [...expenses];
-    const modifier = sortConfig.direction === "asc" ? 1 : -1;
+  const sortedIncomes = useMemo(() => {
+    const filtered = incomes.filter((income) => {
+      const incomeTime = new Date(income.date).getTime();
+      if (!Number.isFinite(incomeTime)) {
+        return true;
+      }
 
-    cloned.sort((left, right) => {
+      if (filters.startDate) {
+        const start = new Date(`${filters.startDate}T00:00:00`).getTime();
+        if (incomeTime < start) {
+          return false;
+        }
+      }
+
+      if (filters.endDate) {
+        const end = new Date(`${filters.endDate}T23:59:59`).getTime();
+        if (incomeTime > end) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    const modifier = sortConfig.direction === "asc" ? 1 : -1;
+    filtered.sort((left, right) => {
       if (sortConfig.key === "amount" || sortConfig.key === "id") {
         return (Number(left[sortConfig.key]) - Number(right[sortConfig.key])) * modifier;
       }
@@ -118,37 +136,23 @@ function ExpenseHistoryPage() {
       );
     });
 
-    return cloned;
-  }, [expenses, sortConfig]);
+    return filtered;
+  }, [filters.endDate, filters.startDate, incomes, sortConfig]);
 
   return (
     <div className="space-y-6">
-      <SectionCard eyebrow="Expenses" title="Expense totals">
+      <SectionCard eyebrow="Income" title="Income history">
         <div className="grid gap-4 md:grid-cols-3">
-          <StatTile
-            label={activeCollection === "filtered" ? "Filtered total" : "Total spend"}
-            value={formatCurrency(totals.total)}
-            accent="slate"
-          />
-          <StatTile label="Cash spend" value={formatCurrency(totals.cash)} accent="emerald" />
-          <StatTile label="Online spend" value={formatCurrency(totals.online)} accent="blue" />
+          <StatTile label="Total income" value={formatCurrency(incomeTotals.total)} accent="emerald" />
+          <StatTile label="Cash income" value={formatCurrency(incomeTotals.cash)} accent="blue" />
+          <StatTile label="Online income" value={formatCurrency(incomeTotals.online)} accent="slate" />
         </div>
       </SectionCard>
 
-      <SectionCard eyebrow="Filters" title="Filter and sort">
+      <SectionCard eyebrow="Filters" title="Date filter and sorting">
         <form className="grid gap-5 lg:grid-cols-5" onSubmit={handleApply}>
           <StatusBanner tone="success" message={statusMessage} className="lg:col-span-5" />
           <StatusBanner tone="error" message={errorMessage} className="lg:col-span-5" />
-          <SelectField
-            label="Category"
-            value={filters.category}
-            onChange={(event) =>
-              setFilters((current) => ({ ...current, category: event.target.value }))
-            }
-            options={expenseCategories}
-            includeEmptyOption
-            emptyLabel="All categories"
-          />
           <Field
             label="Start date"
             type="date"
@@ -171,7 +175,7 @@ function ExpenseHistoryPage() {
             onChange={(event) =>
               setSortConfig((current) => ({ ...current, key: event.target.value }))
             }
-            options={["date", "amount", "category", "paymentMode", "description", "id"]}
+            options={["date", "amount", "description", "paymentMode", "id"]}
           />
           <SelectField
             label="Direction"
@@ -196,13 +200,13 @@ function ExpenseHistoryPage() {
               disabled={isRefreshing}
               className="rounded-[16px] bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isRefreshing ? "Applying..." : "Apply filters"}
+              Apply filters
             </button>
           </div>
         </form>
       </SectionCard>
 
-      <SectionCard eyebrow="Entries" title="Expense list">
+      <SectionCard eyebrow="Entries" title="Income list">
         <StatusBanner tone="error" message={requestError} className="mb-4" />
         <div className="overflow-hidden rounded-[20px] border border-[var(--border)]">
           <div className="overflow-x-auto">
@@ -211,7 +215,6 @@ function ExpenseHistoryPage() {
                 <tr>
                   <th className="px-4 py-4 font-medium">ID</th>
                   <th className="px-4 py-4 font-medium">Amount</th>
-                  <th className="px-4 py-4 font-medium">Category</th>
                   <th className="px-4 py-4 font-medium">Description</th>
                   <th className="px-4 py-4 font-medium">Payment</th>
                   <th className="px-4 py-4 font-medium">Date</th>
@@ -219,39 +222,38 @@ function ExpenseHistoryPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border)] text-sm text-[var(--muted)]">
-                {isBootstrapping ? (
+                {isIncomeLoading ? (
                   <tr>
-                    <td className="px-4 py-10 text-center" colSpan="7">
-                      Loading expenses...
+                    <td className="px-4 py-10 text-center" colSpan="6">
+                      Loading incomes...
                     </td>
                   </tr>
-                ) : sortedExpenses.length ? (
-                  sortedExpenses.map((expense) => (
-                    <tr key={`${expense.id}-${expense.date}`}>
-                      <td className="px-4 py-4">{expense.id ?? "--"}</td>
+                ) : sortedIncomes.length ? (
+                  sortedIncomes.map((income) => (
+                    <tr key={`${income.id}-${income.date}`}>
+                      <td className="px-4 py-4">{income.id ?? "--"}</td>
                       <td className="px-4 py-4 font-semibold text-[var(--text)]">
-                        {formatCurrency(expense.amount)}
+                        {formatCurrency(income.amount)}
                       </td>
-                      <td className="px-4 py-4">{expense.category}</td>
-                      <td className="px-4 py-4">{expense.description}</td>
-                      <td className="px-4 py-4">{expense.paymentMode}</td>
-                      <td className="px-4 py-4">{formatDate(expense.date)}</td>
+                      <td className="px-4 py-4">{income.description}</td>
+                      <td className="px-4 py-4">{income.paymentMode}</td>
+                      <td className="px-4 py-4">{formatDate(income.date)}</td>
                       <td className="px-4 py-4">
                         <button
                           type="button"
-                          onClick={() => void handleDelete(expense.id)}
-                          disabled={deletingExpenseId === expense.id || isRefreshing}
+                          onClick={() => void handleDelete(income.id)}
+                          disabled={deletingIncomeId === income.id || isRefreshing}
                           className="rounded-full border border-rose-300/60 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-500/20 dark:text-rose-300"
                         >
-                          {deletingExpenseId === expense.id ? "Deleting..." : "Delete"}
+                          {deletingIncomeId === income.id ? "Deleting..." : "Delete"}
                         </button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td className="px-4 py-10 text-center" colSpan="7">
-                      No expenses found.
+                    <td className="px-4 py-10 text-center" colSpan="6">
+                      No incomes found.
                     </td>
                   </tr>
                 )}
@@ -264,4 +266,4 @@ function ExpenseHistoryPage() {
   );
 }
 
-export default ExpenseHistoryPage;
+export default IncomeHistoryPage;

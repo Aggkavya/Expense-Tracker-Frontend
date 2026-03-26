@@ -1,61 +1,65 @@
 import { Navigate, NavLink, Outlet } from "react-router-dom";
+import { Moon, Sun } from "lucide-react";
 import { getToken } from "../lib/api";
+import { useTheme } from "../context/ThemeContext";
 
 function AuthShell() {
+  const { theme, toggleTheme } = useTheme();
+
   if (getToken()) {
     return <Navigate to="/overview" replace />;
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-7xl overflow-hidden rounded-[34px] border border-slate-200/80 bg-white shadow-[0_40px_100px_rgba(15,23,42,0.12)] lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="relative overflow-hidden bg-[linear-gradient(160deg,#0f172a_0%,#1d4ed8_52%,#14b8a6_100%)] p-8 text-white sm:p-12">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.18),_transparent_22%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.18),_transparent_24%)]" />
-          <div className="relative flex h-full flex-col justify-between">
+    <main className="min-h-screen px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-[1400px] overflow-hidden rounded-[30px] border border-[var(--border)] bg-[var(--surface)] shadow-[0_40px_100px_rgba(15,23,42,0.14)] lg:grid-cols-[1.15fr_0.85fr]">
+        <section className="relative overflow-hidden bg-[linear-gradient(155deg,#1e3a8a_0%,#2563eb_50%,#0ea5e9_100%)] p-8 text-white sm:p-12">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.22),_transparent_26%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.16),_transparent_26%)]" />
+          <div className="relative flex h-full flex-col justify-between gap-10">
             <div>
-              <div className="inline-flex items-center gap-3 rounded-full border border-white/18 bg-white/10 px-4 py-2 text-sm font-medium">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-950">
+              <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-900">
                   FT
                 </span>
-                Personal Finance Tracker
+                Finance Tracker
               </div>
-              <div className="mt-12 max-w-xl">
-                <p className="font-serif text-5xl leading-[0.9] sm:text-6xl">
-                  White-space clarity with sharper money workflows.
-                </p>
-                <p className="mt-6 max-w-lg text-base leading-7 text-white/78">
-                  Separate pages for overview, balances, new expenses, and spending history, with a cleaner interface that feels deliberate.
-                </p>
-              </div>
+              <h1 className="mt-12 max-w-xl font-serif text-5xl leading-[0.92] sm:text-6xl">
+                Track cash flow with clarity.
+              </h1>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
-              {[
-                "Fresh auth flow",
-                "Multi-page expense workspace",
-                "Consistent white-first design system",
-              ].map((item) => (
-                <div
-                  key={item}
-                  className="rounded-[24px] border border-white/14 bg-white/10 px-4 py-5 text-sm leading-6 text-white/78 backdrop-blur"
-                >
-                  {item}
-                </div>
-              ))}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-[18px] border border-white/20 bg-white/10 px-4 py-4 text-sm">
+                Expense and income pages
+              </div>
+              <div className="rounded-[18px] border border-white/20 bg-white/10 px-4 py-4 text-sm">
+                Debt ledger support
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="flex min-h-full flex-col justify-between bg-white px-6 py-8 sm:px-10 sm:py-10">
+        <section className="flex min-h-full flex-col justify-between bg-[var(--surface)] px-6 py-8 sm:px-10 sm:py-10">
           <div>
-            <div className="flex gap-2 rounded-full bg-slate-100 p-1">
+            <div className="mb-6 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:brightness-95"
+              >
+                {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+                {theme === "dark" ? "Light" : "Dark"}
+              </button>
+            </div>
+
+            <div className="flex gap-2 rounded-full bg-[var(--surface-soft)] p-1">
               <NavLink
                 to="/auth/login"
                 className={({ isActive }) =>
                   `flex-1 rounded-full px-4 py-3 text-center text-sm font-semibold transition ${
                     isActive
-                      ? "bg-white text-slate-950 shadow-sm"
-                      : "text-slate-500 hover:text-slate-900"
+                      ? "bg-[var(--surface)] text-[var(--text)] shadow-sm"
+                      : "text-[var(--muted)] hover:text-[var(--text)]"
                   }`
                 }
               >
@@ -66,8 +70,8 @@ function AuthShell() {
                 className={({ isActive }) =>
                   `flex-1 rounded-full px-4 py-3 text-center text-sm font-semibold transition ${
                     isActive
-                      ? "bg-white text-slate-950 shadow-sm"
-                      : "text-slate-500 hover:text-slate-900"
+                      ? "bg-[var(--surface)] text-[var(--text)] shadow-sm"
+                      : "text-[var(--muted)] hover:text-[var(--text)]"
                   }`
                 }
               >
@@ -80,8 +84,8 @@ function AuthShell() {
             </div>
           </div>
 
-          <p className="mt-10 text-xs uppercase tracking-[0.24em] text-slate-400">
-            Built around your current auth and expense endpoints
+          <p className="mt-10 text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
+            Finance Tracker
           </p>
         </section>
       </div>

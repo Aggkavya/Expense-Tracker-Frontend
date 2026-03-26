@@ -7,18 +7,17 @@ import {
   StatusBanner,
 } from "../components/FormControls";
 import { useFinance } from "../context/FinanceContext";
-import { expenseCategories, paymentModes } from "../lib/api";
+import { paymentModes } from "../lib/api";
 import { formatCurrency } from "../lib/format";
 
 const initialState = {
   amount: "",
   description: "",
-  category: expenseCategories[0],
   paymentMode: paymentModes[0],
 };
 
-function NewExpensePage() {
-  const { addExpense, balances } = useFinance();
+function NewIncomePage() {
+  const { addIncomeEntry, balances } = useFinance();
   const [values, setValues] = useState(initialState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
@@ -31,13 +30,13 @@ function NewExpensePage() {
     setIsSubmitting(true);
 
     try {
-      await addExpense({
-        ...values,
+      await addIncomeEntry({
         amount: Number(values.amount),
+        description: values.description,
+        paymentMode: values.paymentMode,
       });
-
       setValues(initialState);
-      setStatusMessage("Expense created successfully.");
+      setStatusMessage("Income created.");
     } catch (error) {
       setErrorMessage(error.message);
     } finally {
@@ -47,37 +46,28 @@ function NewExpensePage() {
 
   return (
     <div className="space-y-6">
-      <SectionCard
-        eyebrow="Create expense"
-        title="New expense"
-      >
+      <SectionCard eyebrow="Income" title="Create Income">
         <div className="grid gap-4 md:grid-cols-3">
-          <StatTile
-            label="Selected category"
-            value={values.category}
-            accent="blue"
-          />
-          <StatTile
-            label="Payment mode"
-            value={values.paymentMode}
-            accent="emerald"
-          />
-          <StatTile
-            label="Current amount"
-            value={formatCurrency(values.amount || 0)}
-            accent="orange"
-          />
+          <StatTile label="Amount" value={formatCurrency(values.amount || 0)} accent="emerald" />
+          <StatTile label="Payment mode" value={values.paymentMode} accent="blue" />
+          <StatTile label="Description" value={values.description || "--"} accent="slate" />
         </div>
       </SectionCard>
 
       <SectionCard
         eyebrow="Form"
-        title="Create expense entry"
+        title="New income entry"
         aside={
           <div className="rounded-[18px] border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-3 text-sm text-[var(--muted)]">
-            Cash: <span className="font-semibold text-[var(--text)]">{formatCurrency(balances.cashInHand)}</span>
+            Cash:{" "}
+            <span className="font-semibold text-[var(--text)]">
+              {formatCurrency(balances.cashInHand)}
+            </span>
             <br />
-            Bank: <span className="font-semibold text-[var(--text)]">{formatCurrency(balances.bankBalance)}</span>
+            Bank:{" "}
+            <span className="font-semibold text-[var(--text)]">
+              {formatCurrency(balances.bankBalance)}
+            </span>
           </div>
         }
       >
@@ -93,7 +83,7 @@ function NewExpensePage() {
             onChange={(event) =>
               setValues((current) => ({ ...current, amount: event.target.value }))
             }
-            placeholder="320"
+            placeholder="5000"
             required
           />
           <SelectField
@@ -104,22 +94,15 @@ function NewExpensePage() {
             }
             options={paymentModes}
           />
-          <SelectField
-            label="Category"
-            value={values.category}
-            onChange={(event) =>
-              setValues((current) => ({ ...current, category: event.target.value }))
-            }
-            options={expenseCategories}
-          />
           <Field
             label="Description"
             value={values.description}
             onChange={(event) =>
               setValues((current) => ({ ...current, description: event.target.value }))
             }
-            placeholder="stationary"
+            placeholder="Salary / refund / freelance"
             required
+            className="md:col-span-2"
           />
           <div className="md:col-span-2">
             <button
@@ -127,7 +110,7 @@ function NewExpensePage() {
               disabled={isSubmitting}
               className="rounded-[16px] bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isSubmitting ? "Creating expense..." : "Create expense"}
+              {isSubmitting ? "Saving..." : "Create income"}
             </button>
           </div>
         </form>
@@ -136,4 +119,4 @@ function NewExpensePage() {
   );
 }
 
-export default NewExpensePage;
+export default NewIncomePage;

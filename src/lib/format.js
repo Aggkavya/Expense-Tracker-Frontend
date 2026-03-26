@@ -97,3 +97,35 @@ export function normaliseTotalsResponse(payload, fallbackExpenses = []) {
 
   return computed;
 }
+
+export function normaliseIncomeTotalsResponse(payload, fallbackIncomes = []) {
+  const computed = fallbackIncomes.reduce(
+    (summary, income) => {
+      const amount = Number(income.amount ?? 0);
+      const mode = String(income.paymentMode ?? "").toUpperCase();
+
+      summary.total += amount;
+
+      if (mode === "CASH") {
+        summary.cash += amount;
+      }
+
+      if (mode === "ONLINE") {
+        summary.online += amount;
+      }
+
+      return summary;
+    },
+    { total: 0, cash: 0, online: 0 },
+  );
+
+  if (!payload || typeof payload !== "object") {
+    return computed;
+  }
+
+  return {
+    total: Number(payload.totalIncome ?? payload.total ?? computed.total),
+    cash: Number(payload.totalCashIncome ?? payload.cash ?? computed.cash),
+    online: Number(payload.totalOnlineIncome ?? payload.online ?? computed.online),
+  };
+}

@@ -10,19 +10,23 @@ import {
   clearSession,
   createDebt,
   createExpense,
-  deleteExpense,
+  createIncome,
   deleteDebt,
+  deleteExpense,
+  deleteIncome,
   getAllExpenses,
   getAllDebts,
+  getAllIncomes,
   getBalance,
   getExpenseTotals,
+  getIncomeTotals,
   getFilteredExpenses,
   getStoredBalances,
   payDebt,
   setStoredBalances,
   updateBalance,
 } from "../lib/api";
-import { normaliseTotalsResponse } from "../lib/format";
+import { normaliseIncomeTotalsResponse, normaliseTotalsResponse } from "../lib/format";
 
 const FinanceContext = createContext(null);
 
@@ -30,18 +34,22 @@ export function FinanceProvider({ children }) {
   const navigate = useNavigate();
   const [expenses, setExpenses] = useState([]);
   const [totals, setTotals] = useState({ total: 0, cash: 0, online: 0 });
+  const [incomeTotals, setIncomeTotals] = useState({ total: 0, cash: 0, online: 0 });
   const [balances, setBalances] = useState(getStoredBalances());
   const [debts, setDebts] = useState([]);
+  const [incomes, setIncomes] = useState([]);
   const [activeCollection, setActiveCollection] = useState("all");
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDebtLoading, setIsDebtLoading] = useState(true);
+  const [isIncomeLoading, setIsIncomeLoading] = useState(true);
   const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
   const [requestError, setRequestError] = useState("");
 
   useEffect(() => {
     void loadAllExpenses({ initial: true });
     void loadAllDebts({ initial: true });
+    void loadAllIncomes({ initial: true });
   }, []);
 
   function persistBalances(nextBalances) {
@@ -77,6 +85,33 @@ export function FinanceProvider({ children }) {
     } finally {
       if (initial) {
         setIsDebtLoading(false);
+      }
+    }
+  }
+
+  async function loadAllIncomes(options = {}) {
+    const { initial = false } = options;
+
+    if (initial) {
+      setIsIncomeLoading(true);
+    }
+
+    try {
+      const [allIncomes, totalsPayload] = await Promise.all([
+        getAllIncomes(),
+        getIncomeTotals({}),
+      ]);
+
+      const list = Array.isArray(allIncomes) ? allIncomes : [];
+      setIncomes(list);
+      setIncomeTotals(normaliseIncomeTotalsResponse(totalsPayload, list));
+    } catch (error) {
+      if (!handleAuthError(error)) {
+        setRequestError(error.message);
+      }
+    } finally {
+      if (initial) {
+        setIsIncomeLoading(false);
       }
     }
   }
@@ -192,11 +227,39 @@ export function FinanceProvider({ children }) {
     }
   }
 
+  async function refreshIncomeTotals(filters = {}) {
+    try {
+      const totalsPayload = await getIncomeTotals(filters);
+      const nextTotals = normaliseIncomeTotalsResponse(totalsPayload, incomes);
+      setIncomeTotals(nextTotals);
+      return nextTotals;
+    } catch (error) {
+      if (!handleAuthError(error)) {
+        throw error;
+      }
+      return null;
+    }
+  }
+
   async function addExpense(payload) {
     try {
       const response = await createExpense(payload);
 
       await loadAllExpenses();
+      return response;
+    } catch (error) {
+      if (!handleAuthError(error)) {
+        throw error;
+      }
+
+      return null;
+    }
+  }
+
+  async function addIncomeEntry(payload) {
+    try {
+      const response = await createIncome(payload);
+      await Promise.all([refreshBalances(), loadAllIncomes()]);
       return response;
     } catch (error) {
       if (!handleAuthError(error)) {
@@ -272,26 +335,54 @@ export function FinanceProvider({ children }) {
     }
   }
 
+  async function removeIncome(incomeId, options = {}) {
+    const { filters = null } = options;
+
+    try {
+      const response = await deleteIncome(incomeId);
+      await Promise.all([refreshBalances(), loadAllIncomes()]);
+
+      if (filters) {
+        await refreshIncomeTotals(filters);
+      }
+
+      return response;
+    } catch (error) {
+      if (!handleAuthError(error)) {
+        throw error;
+      }
+
+      return null;
+    }
+  }
+
   return (
     <FinanceContext.Provider
       value={{
         activeCollection,
+        addIncomeEntry,
         addExpense,
         applyExpenseFilters,
         balances,
         createDebtEntry,
         debts,
         expenses,
+        incomeTotals,
+        incomes,
         isDebtLoading,
         isBootstrapping,
+        isIncomeLoading,
         isRefreshing,
         lastUpdatedAt,
         loadAllDebts,
         loadAllExpenses,
+        loadAllIncomes,
         payDebtEntry,
+        refreshIncomeTotals,
         requestError,
         removeDebt,
         removeExpense,
+        removeIncome,
         saveBalances,
         totals,
       }}

@@ -38,12 +38,7 @@ function SignupPage() {
       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-600">
         Signup
       </p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-        Create your account
-      </h1>
-      <p className="mt-3 max-w-md text-sm leading-6 text-slate-500">
-        This page matches the fields from your current signup API so you can keep backend work isolated.
-      </p>
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--text)]">Create account</h1>
 
       <form className="mt-8 grid gap-5" onSubmit={handleSubmit}>
         <StatusBanner tone="error" message={errorMessage} />
@@ -89,15 +84,15 @@ function SignupPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-[20px] bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-[16px] bg-[var(--brand)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isSubmitting ? "Creating account..." : "Signup"}
         </button>
       </form>
 
-      <p className="mt-5 text-sm text-slate-500">
+      <p className="mt-5 text-sm text-[var(--muted)]">
         Already registered?{" "}
-        <Link to="/auth/login" className="font-semibold text-blue-600 hover:text-blue-700">
+        <Link to="/auth/login" className="font-semibold text-[var(--brand)] hover:opacity-90">
           Login here
         </Link>
       </p>

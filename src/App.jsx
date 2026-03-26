@@ -6,9 +6,11 @@ import { FinanceProvider } from "./context/FinanceContext";
 import BalancesPage from "./pages/BalancesPage";
 import DebtHistoryPage from "./pages/DebtHistoryPage";
 import ExpenseHistoryPage from "./pages/ExpenseHistoryPage";
+import IncomeHistoryPage from "./pages/IncomeHistoryPage";
 import LoginPage from "./pages/LoginPage";
 import NewDebtPage from "./pages/NewDebtPage";
 import NewExpensePage from "./pages/NewExpensePage";
+import NewIncomePage from "./pages/NewIncomePage";
 import OverviewPage from "./pages/OverviewPage";
 import SignupPage from "./pages/SignupPage";
 
@@ -34,6 +36,8 @@ function App() {
           <Route path="/balances" element={<BalancesPage />} />
           <Route path="/expenses/new" element={<NewExpensePage />} />
           <Route path="/expenses/history" element={<ExpenseHistoryPage />} />
+          <Route path="/incomes/new" element={<NewIncomePage />} />
+          <Route path="/incomes/history" element={<IncomeHistoryPage />} />
           <Route path="/debts/new" element={<NewDebtPage />} />
           <Route path="/debts/history" element={<DebtHistoryPage />} />
         </Route>

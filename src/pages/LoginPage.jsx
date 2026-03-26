@@ -46,15 +46,10 @@ function LoginPage() {
 
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-600">
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--brand)]">
         Login
       </p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-        Welcome back
-      </h1>
-      <p className="mt-3 max-w-md text-sm leading-6 text-slate-500">
-        Enter the same username and password fields your backend expects and continue into the tracker.
-      </p>
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--text)]">Welcome back</h1>
 
       <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
         <StatusBanner tone="error" message={errorMessage} />
@@ -80,7 +75,7 @@ function LoginPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-[20px] bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-[16px] bg-[var(--brand)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isSubmitting ? "Signing in..." : "Login"}
         </button>

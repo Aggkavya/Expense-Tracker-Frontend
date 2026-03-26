@@ -20,6 +20,14 @@ function DebtHistoryPage() {
   const [historyByDebtId, setHistoryByDebtId] = useState({});
   const [historyLoadingByDebtId, setHistoryLoadingByDebtId] = useState({});
 
+  function getDeleteErrorMessage(error) {
+    const raw = String(error?.message ?? "");
+    if (raw.toLowerCase().includes("can't connect to the server")) {
+      return "Could not delete because app can't connect to backend.";
+    }
+    return raw || "Delete failed. Please try again.";
+  }
+
   const debtSummary = useMemo(
     () =>
       debts.reduce(
@@ -144,7 +152,7 @@ function DebtHistoryPage() {
 
   async function handleDeleteDebt(debtId) {
     const confirmed = window.confirm(
-      "Delete this debt and reverse its balance impact? All related ledger payments will also be removed.",
+      "Delete this debt? This cannot be undone. All related payments will be deleted and balances will be recalculated.",
     );
 
     if (!confirmed) {
@@ -157,9 +165,11 @@ function DebtHistoryPage() {
 
     try {
       await removeDebt(debtId);
-      setStatusMessage("Debt deleted successfully.");
+      window.alert("Debt deleted. Related payments were removed and balances updated.");
     } catch (error) {
-      setErrorMessage(error.message);
+      const message = getDeleteErrorMessage(error);
+      setErrorMessage(message);
+      window.alert(message);
     } finally {
       setActiveDebtId(null);
     }
@@ -169,8 +179,7 @@ function DebtHistoryPage() {
     <div className="space-y-6">
       <SectionCard
         eyebrow="Debt ledger"
-        title="Manage debts and repayment history"
-        description="Each debt shows its remaining amount, historical status, and nested ledger entries for every payment."
+        title="Debt summary"
       >
         <div className="grid gap-4 md:grid-cols-3">
           <StatTile
@@ -194,14 +203,13 @@ function DebtHistoryPage() {
       <SectionCard
         eyebrow="Debt records"
         title="All debts"
-        description="Pay down individual debts, inspect ledger rows, or delete a debt with full reversal."
       >
         <StatusBanner tone="success" message={statusMessage} className="mb-4" />
         <StatusBanner tone="error" message={errorMessage || requestError} className="mb-4" />
 
         <div className="space-y-4">
           {isDebtLoading ? (
-            <div className="rounded-[24px] border border-slate-200 bg-white px-5 py-10 text-center text-sm text-slate-400">
+            <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] px-5 py-10 text-center text-sm text-[var(--muted)]">
               Loading debt records...
             </div>
           ) : debts.length ? (
@@ -215,7 +223,7 @@ function DebtHistoryPage() {
               return (
                 <article
                   key={debt.id}
-                  className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)]"
+                  className="rounded-[28px] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-3">
@@ -236,7 +244,7 @@ function DebtHistoryPage() {
                       <h3 className="text-2xl font-semibold text-slate-950">
                         {debt.description}
                       </h3>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-[var(--muted)]">
                         Created on {formatDate(debt.date)}
                       </p>
                     </div>
@@ -258,7 +266,7 @@ function DebtHistoryPage() {
                     <button
                       type="button"
                       onClick={() => handleToggleDetails(debt.id)}
-                      className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100"
+                      className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:brightness-95"
                     >
                       {isExpanded ? "Hide details" : "Show details"}
                     </button>
@@ -315,7 +323,7 @@ function DebtHistoryPage() {
                           <button
                             type="submit"
                             disabled={isBusy}
-                            className="rounded-[18px] bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+                            className="rounded-[16px] bg-[var(--brand)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:cursor-not-allowed disabled:opacity-70"
                           >
                             {isBusy ? "Saving..." : "Record payment"}
                           </button>
@@ -376,7 +384,7 @@ function DebtHistoryPage() {
               );
             })
           ) : (
-            <div className="rounded-[24px] border border-slate-200 bg-white px-5 py-10 text-center text-sm text-slate-400">
+            <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] px-5 py-10 text-center text-sm text-[var(--muted)]">
               No debts recorded yet.
             </div>
           )}
@@ -388,11 +396,11 @@ function DebtHistoryPage() {
 
 function MiniStat({ label, value }) {
   return (
-    <div className="rounded-[20px] border border-slate-200 bg-slate-50 px-4 py-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+    <div className="rounded-[20px] border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">
         {label}
       </p>
-      <p className="mt-2 text-lg font-semibold text-slate-950">{value}</p>
+      <p className="mt-2 text-lg font-semibold text-[var(--text)]">{value}</p>
     </div>
   );
 }

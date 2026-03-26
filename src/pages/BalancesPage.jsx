@@ -38,6 +38,14 @@ function BalancesPage() {
       return;
     }
 
+    const confirmed = window.confirm(
+      "Update balances now? This will overwrite current Cash in Hand and Bank Balance values.",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -59,8 +67,7 @@ function BalancesPage() {
     <div className="space-y-6">
       <SectionCard
         eyebrow="Balances"
-        title="Update cash and bank values"
-        description="This page is dedicated to the `/user/updateBalance` endpoint so the action has its own space."
+        title="Update balances"
       >
         <div className="grid gap-4 md:grid-cols-2">
           <StatTile
@@ -77,13 +84,18 @@ function BalancesPage() {
       </SectionCard>
 
       <SectionCard
-        eyebrow="Balance form"
-        title="Push updated balances"
-        description="Send the latest values to your backend and keep the cached balance cards fresh. Cash cannot be negative, but bank balance can be negative."
+        eyebrow="Form"
+        title="Set cash and bank balance"
+        description="Cash cannot be negative. Bank balance can be negative."
       >
         <form className="grid gap-5 md:grid-cols-2" onSubmit={handleSubmit}>
           <StatusBanner tone="success" message={statusMessage} className="md:col-span-2" />
           <StatusBanner tone="error" message={errorMessage} className="md:col-span-2" />
+          <StatusBanner
+            tone="warning"
+            message="Warning: this action overwrites both balances directly."
+            className="md:col-span-2"
+          />
           <Field
             label="Cash in hand"
             type="number"
@@ -113,7 +125,7 @@ function BalancesPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-[20px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded-[16px] bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isSubmitting ? "Saving..." : "Update balance"}
             </button>

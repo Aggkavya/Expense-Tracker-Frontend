@@ -1,49 +1,58 @@
 import {
   ArrowRightLeft,
-  CreditCard,
+  CircleDollarSign,
   HandCoins,
   LayoutDashboard,
+  Landmark,
   LogOut,
+  Moon,
   PlusCircle,
+  Receipt,
   ScrollText,
+  Sun,
 } from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { clearSession, getStoredUser } from "../lib/api";
+import { useTheme } from "../context/ThemeContext";
 
 const navigation = [
   {
     label: "Overview",
-    description: "Summary and quick actions",
     to: "/overview",
     icon: LayoutDashboard,
   },
   {
     label: "Balances",
-    description: "Update cash and bank",
     to: "/balances",
     icon: ArrowRightLeft,
   },
   {
     label: "New Expense",
-    description: "Create a fresh expense",
     to: "/expenses/new",
     icon: PlusCircle,
   },
   {
     label: "Expense History",
-    description: "Filter and sort spending",
     to: "/expenses/history",
-    icon: CreditCard,
+    icon: Receipt,
+  },
+  {
+    label: "New Income",
+    to: "/incomes/new",
+    icon: CircleDollarSign,
+  },
+  {
+    label: "Income History",
+    to: "/incomes/history",
+    icon: Landmark,
   },
   {
     label: "New Debt",
-    description: "Record borrowed money",
     to: "/debts/new",
     icon: HandCoins,
   },
   {
     label: "Debt Ledger",
-    description: "Pay, inspect, or delete debts",
     to: "/debts/history",
     icon: ScrollText,
   },
@@ -51,6 +60,7 @@ const navigation = [
 
 function AppShell() {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const user = getStoredUser();
 
   function handleLogout() {
@@ -59,34 +69,28 @@ function AppShell() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-slate-900">
-      <div className="mx-auto grid min-h-screen max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-6">
-        <aside className="rounded-[30px] border border-slate-200/80 bg-white/95 p-5 shadow-[0_30px_80px_rgba(15,23,42,0.08)] backdrop-blur">
-          <div className="rounded-[28px] bg-[linear-gradient(135deg,#0f172a_0%,#1d4ed8_58%,#14b8a6_100%)] p-6 text-white">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/14 text-xl font-bold">
+    <div className="min-h-screen text-[var(--text)]">
+      <div className="mx-auto grid min-h-screen w-full gap-6 px-4 py-4 lg:grid-cols-[300px_minmax(0,1fr)] xl:px-8">
+        <aside className="rounded-[28px] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_30px_80px_rgba(15,23,42,0.10)]">
+          <div className="rounded-[24px] bg-[linear-gradient(145deg,#1e3a8a_0%,#2563eb_45%,#0ea5e9_100%)] p-6 text-white">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-xl font-bold">
               FT
             </div>
             <h1 className="mt-6 font-serif text-3xl leading-none">
-              Finance tracker
+              Finance Tracker
             </h1>
-            <p className="mt-3 text-sm leading-6 text-white/78">
-              Clean pages for balance control, expense capture, and filtered spend reviews.
+          </div>
+
+          <div className="mt-6 rounded-[20px] border border-[var(--border)] bg-[var(--surface-soft)] p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]">
+              User
+            </p>
+            <p className="mt-2 text-lg font-semibold text-[var(--text)]">
+              {user?.userName ?? "--"}
             </p>
           </div>
 
-          <div className="mt-6 rounded-[24px] border border-slate-200 bg-slate-50/80 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-              Active user
-            </p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">
-              {user?.userName ?? "Authenticated"}
-            </p>
-            <p className="mt-1 text-sm text-slate-500">
-              JWT-secured workspace
-            </p>
-          </div>
-
-          <nav className="mt-6 space-y-2">
+          <nav className="mt-6 grid grid-cols-1 gap-2">
             {navigation.map((item) => {
               const Icon = item.icon;
 
@@ -95,34 +99,23 @@ function AppShell() {
                   key={item.to}
                   to={item.to}
                   className={({ isActive }) =>
-                    `group flex items-start gap-4 rounded-[22px] px-4 py-4 transition ${
+                    `group flex items-center gap-3 rounded-[16px] px-4 py-3 transition ${
                       isActive
-                        ? "bg-slate-950 text-white shadow-[0_18px_40px_rgba(15,23,42,0.22)]"
-                        : "border border-transparent bg-white text-slate-700 hover:border-slate-200 hover:bg-slate-50"
+                        ? "bg-[var(--brand)] text-white shadow-[0_18px_36px_rgba(37,99,235,0.32)]"
+                        : "border border-transparent text-[var(--text)] hover:border-[var(--border)] hover:bg-[var(--surface-soft)]"
                     }`
                   }
                 >
                   {({ isActive }) => (
                     <>
                       <span
-                        className={`mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl ${
-                          isActive
-                            ? "bg-white/12 text-white"
-                            : "bg-blue-50 text-blue-700"
+                        className={`flex h-9 w-9 items-center justify-center rounded-xl ${
+                          isActive ? "bg-white/20 text-white" : "bg-blue-500/10 text-[var(--brand)]"
                         }`}
                       >
                         <Icon size={18} />
                       </span>
-                      <span className="flex-1">
-                        <span className="block text-sm font-semibold">{item.label}</span>
-                        <span
-                          className={`mt-1 block text-xs leading-5 ${
-                            isActive ? "text-white/70" : "text-slate-500"
-                          }`}
-                        >
-                          {item.description}
-                        </span>
-                      </span>
+                      <span className="text-sm font-semibold">{item.label}</span>
                     </>
                   )}
                 </NavLink>
@@ -132,15 +125,24 @@ function AppShell() {
 
           <button
             type="button"
+            onClick={toggleTheme}
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-[16px] border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-3 text-sm font-semibold text-[var(--text)] transition hover:brightness-95"
+          >
+            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            {theme === "dark" ? "Light mode" : "Dark mode"}
+          </button>
+
+          <button
+            type="button"
             onClick={handleLogout}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-[22px] border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-[16px] border border-[var(--border)] px-4 py-3 text-sm font-semibold text-[var(--text)] transition hover:bg-[var(--surface-soft)]"
           >
             <LogOut size={16} />
             Logout
           </button>
         </aside>
 
-        <div className="min-w-0">
+        <div className="min-w-0 rounded-[28px] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[0_30px_80px_rgba(15,23,42,0.08)] sm:p-6">
           <Outlet />
         </div>
       </div>

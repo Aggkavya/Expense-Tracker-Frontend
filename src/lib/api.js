@@ -120,7 +120,7 @@ async function request(path, options = {}) {
     });
   } catch {
     throw new ApiError(
-      "Unable to reach the API. If the backend is running, this is usually a CORS or API URL issue.",
+      "Can't connect to the server. Check if backend URL is correct and try again.",
     );
   }
 
@@ -188,6 +188,27 @@ export function getExpenseTotals(filters) {
 
 export function deleteExpense(expenseId) {
   return request(`/expense/delete${buildQuery({ expenseId })}`, {
+    method: "DELETE",
+  });
+}
+
+export function createIncome(payload) {
+  return request("/income/newIncome", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function getAllIncomes() {
+  return request("/income/allIncomes");
+}
+
+export function getIncomeTotals(filters) {
+  return request(`/income/total${buildQuery(filters)}`);
+}
+
+export function deleteIncome(incomeId) {
+  return request(`/income/delete${buildQuery({ incomeId })}`, {
     method: "DELETE",
   });
 }
