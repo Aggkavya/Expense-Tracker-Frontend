@@ -61,6 +61,7 @@ const navigation = [
 function AppShell() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
   const user = getStoredUser();
 
   function handleLogout() {
@@ -71,8 +72,17 @@ function AppShell() {
   return (
     <div className="min-h-screen text-[var(--text)]">
       <div className="mx-auto grid min-h-screen w-full gap-6 px-4 py-4 lg:grid-cols-[300px_minmax(0,1fr)] xl:px-8">
-        <aside className="rounded-[28px] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_30px_80px_rgba(15,23,42,0.10)]">
-          <div className="rounded-[24px] bg-[linear-gradient(145deg,#1e3a8a_0%,#2563eb_45%,#0ea5e9_100%)] p-6 text-white">
+        <aside
+          className="rounded-[28px] border border-[var(--border)] bg-[var(--surface)] p-5"
+          style={{ boxShadow: "var(--panel-shadow)" }}
+        >
+          <div
+            className={`rounded-[24px] p-6 text-white ${
+              isDark
+                ? "border border-cyan-400/35 bg-[linear-gradient(145deg,#030b14_0%,#0a2236_55%,#134b68_100%)]"
+                : "bg-[linear-gradient(145deg,#1e3a8a_0%,#2563eb_45%,#0ea5e9_100%)]"
+            }`}
+          >
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-xl font-bold">
               FT
             </div>
@@ -101,7 +111,9 @@ function AppShell() {
                   className={({ isActive }) =>
                     `group flex items-center gap-3 rounded-[16px] px-4 py-3 transition ${
                       isActive
-                        ? "bg-[var(--brand)] text-white shadow-[0_18px_36px_rgba(37,99,235,0.32)]"
+                        ? isDark
+                          ? "bg-[var(--brand)] text-[#041421] shadow-[0_0_0_1px_rgba(0,194,255,0.35),0_12px_26px_rgba(0,0,0,0.45)]"
+                          : "bg-[var(--brand)] text-white shadow-[0_18px_36px_rgba(37,99,235,0.32)]"
                         : "border border-transparent text-[var(--text)] hover:border-[var(--border)] hover:bg-[var(--surface-soft)]"
                     }`
                   }
@@ -110,7 +122,11 @@ function AppShell() {
                     <>
                       <span
                         className={`flex h-9 w-9 items-center justify-center rounded-xl ${
-                          isActive ? "bg-white/20 text-white" : "bg-blue-500/10 text-[var(--brand)]"
+                          isActive
+                            ? isDark
+                              ? "bg-[#041421]/25 text-[#041421]"
+                              : "bg-white/20 text-white"
+                            : "bg-cyan-500/10 text-[var(--brand)]"
                         }`}
                       >
                         <Icon size={18} />
@@ -142,7 +158,10 @@ function AppShell() {
           </button>
         </aside>
 
-        <div className="min-w-0 rounded-[28px] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[0_30px_80px_rgba(15,23,42,0.08)] sm:p-6">
+        <div
+          className="min-w-0 rounded-[28px] border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-6"
+          style={{ boxShadow: "var(--panel-shadow)" }}
+        >
           <Outlet />
         </div>
       </div>

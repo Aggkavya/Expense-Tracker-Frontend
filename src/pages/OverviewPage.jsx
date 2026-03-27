@@ -1,9 +1,12 @@
 import { Link } from "react-router-dom";
 import { SectionCard, StatTile, StatusBanner } from "../components/FormControls";
 import { useFinance } from "../context/FinanceContext";
+import { useTheme } from "../context/ThemeContext";
 import { formatCurrency, formatDate } from "../lib/format";
 
 function OverviewPage() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const {
     balances,
     debts,
@@ -38,7 +41,13 @@ function OverviewPage() {
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-[28px] border border-[var(--border)] bg-[linear-gradient(140deg,#1e3a8a_0%,#2563eb_58%,#0284c7_100%)] p-7 text-white shadow-[0_28px_80px_rgba(37,99,235,0.35)] sm:p-8">
+      <section
+        className={`overflow-hidden rounded-[28px] border border-[var(--border)] p-7 text-white sm:p-8 ${
+          isDark
+            ? "bg-[linear-gradient(140deg,#03101a_0%,#0b2639_58%,#124b67_100%)] shadow-[0_0_0_1px_rgba(0,194,255,0.28),0_24px_60px_rgba(0,0,0,0.56)]"
+            : "bg-[linear-gradient(140deg,#1e3a8a_0%,#2563eb_58%,#0284c7_100%)] shadow-[0_28px_80px_rgba(37,99,235,0.35)]"
+        }`}
+      >
         <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
